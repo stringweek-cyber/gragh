@@ -22,6 +22,7 @@ h1{font-size:1.6rem;margin:0 0 12px;text-wrap:balance}
 /* 세로축 설정(왼쪽) · 그래프(가운데) · 가로축 설정(오른쪽) */
 .layout{display:grid;grid-template-columns:370px 1fr 370px;gap:20px;align-items:start}
 @media (max-width:1180px){.layout{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:20px;min-width:0}
 .side{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
 .axisbox{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px}
 fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
@@ -42,11 +43,13 @@ button.ghost{background:transparent;color:var(--accent)}
 .paper img{max-width:100%;height:auto;display:block}
 .hint{font-size:1.1rem;color:var(--muted);margin:10px 0 0}
 .err{color:#c0392b}
+#msg:empty{display:none}
 </style>
 
 <div class="wrap">
   <h1>빈 그래프 만들기</h1>
   <form class="layout" id="f" autocomplete="off">
+    <div class="col">
     <div class="side">
       <div class="axisbox">
       <fieldset>
@@ -69,13 +72,21 @@ button.ghost{background:transparent;color:var(--accent)}
         </div>
       </fieldset>
       </div>
+    </div>
 
+    <div class="side">
       <fieldset>
         <legend>눈금 숫자</legend>
         <label class="check" for="showNums"><input type="checkbox" id="showNums" checked>눈금 숫자 표시</label>
         <p class="msg" style="margin:0">지우고 싶은 눈금 숫자를 클릭하면 숨겨지고, 다시 클릭하면 나타납니다.</p>
         <div class="btns"><button type="button" class="ghost" id="unhideBtn">숨긴 숫자 모두 보이기</button></div>
       </fieldset>
+      <hr>
+      <div class="btns">
+        <button type="button" id="copyBtn">이미지 복사</button>
+      </div>
+      <p class="msg" id="msg" role="status"></p>
+    </div>
     </div>
 
     <section class="preview">
@@ -105,11 +116,6 @@ button.ghost{background:transparent;color:var(--accent)}
         </div>
       </fieldset>
       </div>
-
-      <div class="btns">
-        <button type="button" id="copyBtn">이미지 복사</button>
-      </div>
-      <p class="msg" id="msg" role="status"></p>
     </div>
   </form>
 </div>
