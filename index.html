@@ -1,0 +1,371 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>빈 그래프 만들기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 왼쪽 설정 패널 + 오른쪽 그래프 미리보기 (좁은 화면에서는 위아래로) */
+:root{
+  --bg:#f3f5f6; --panel:#ffffff; --fg:#1f2a30; --muted:#5f6d75; --line:#d9dfe2;
+  --accent:#1f6f8b; --accent-ink:#ffffff; --field:#ffffff;
+  --font:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141a1d; --panel:#1c2428; --fg:#e4eaed; --muted:#9aa8b0; --line:#2f3b41;
+  --accent:#5fb3d0; --accent-ink:#0d1517; --field:#141a1d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a1d; --panel:#1c2428; --fg:#e4eaed; --muted:#9aa8b0; --line:#2f3b41;
+  --accent:#5fb3d0; --accent-ink:#0d1517; --field:#141a1d; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:24px 40px}
+h1{font-size:1.45rem;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--muted);margin:0 0 20px}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.axisbox{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+legend{font-weight:700;font-size:.8rem;letter-spacing:.06em;color:var(--accent);margin-bottom:8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;color:var(--muted);min-width:0}
+input[type=text],input[type=number],select{font:inherit;font-size:.95rem;color:var(--fg);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;box-sizing:border-box;min-width:0;font-variant-numeric:tabular-nums}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.check{flex-direction:row;align-items:center;gap:8px;color:var(--fg);font-size:.9rem}
+hr{border:0;border-top:1px solid var(--line);margin:0}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;font-weight:500;border-radius:6px;padding:9px 14px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+button.ghost{background:transparent;color:var(--accent)}
+.msg{font-size:.82rem;color:var(--muted);min-height:1.2em;margin:0}
+.preview{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.paper{background:#fff;border-radius:4px;padding:8px;display:flex;justify-content:center}
+.paper img{max-width:100%;height:auto;display:block}
+.hint{font-size:.82rem;color:var(--muted);margin:10px 0 0}
+.err{color:#c0392b}
+</style>
+
+<div class="wrap">
+  <h1>빈 그래프 만들기</h1>
+  <p class="sub">축 이름·단위·범위를 넣으면 정사각형 모눈 그래프를 그려 줍니다.</p>
+
+  <div class="grid">
+    <form class="panel" id="f" autocomplete="off">
+      <div class="axisbox">
+      <fieldset>
+        <legend>가로축 (x)</legend>
+        <div class="row">
+          <label for="xName">이름<input type="text" id="xName" value="전압"></label>
+          <label for="xUnit">단위<input type="text" id="xUnit" value="V"></label>
+        </div>
+        <div class="row">
+          <label for="xMin">최솟값<input type="number" id="xMin" value="0" step="any"></label>
+          <label for="xMax">최댓값<input type="number" id="xMax" value="10" step="any"></label>
+        </div>
+        <div class="row">
+          <label for="xMajor">큰 칸 수
+            <select id="xMajor" data-max="20" data-def="10"></select>
+          </label>
+          <label for="xMinor">큰 칸 안의 작은 칸
+            <select id="xMinor" data-max="10" data-def="2" data-suffix="칸"></select>
+          </label>
+        </div>
+      </fieldset>
+      </div>
+
+      <div class="axisbox">
+      <fieldset>
+        <legend>세로축 (y)</legend>
+        <div class="row">
+          <label for="yName">이름<input type="text" id="yName" value="전류"></label>
+          <label for="yUnit">단위<input type="text" id="yUnit" value="A"></label>
+        </div>
+        <div class="row">
+          <label for="yMin">최솟값<input type="number" id="yMin" value="0" step="any"></label>
+          <label for="yMax">최댓값<input type="number" id="yMax" value="100" step="any"></label>
+        </div>
+        <div class="row">
+          <label for="yMajor">큰 칸 수
+            <select id="yMajor" data-max="20" data-def="10"></select>
+          </label>
+          <label for="yMinor">큰 칸 안의 작은 칸
+            <select id="yMinor" data-max="10" data-def="2" data-suffix="칸"></select>
+          </label>
+        </div>
+      </fieldset>
+      </div>
+
+      <hr>
+
+      <fieldset>
+        <legend>눈금 숫자</legend>
+        <label class="check" for="showNums"><input type="checkbox" id="showNums" checked>눈금 숫자 표시</label>
+        <p class="msg" style="margin:0">지우고 싶은 눈금 숫자를 클릭하면 숨겨지고, 다시 클릭하면 나타납니다.</p>
+        <div class="btns"><button type="button" class="ghost" id="unhideBtn">숨긴 숫자 모두 보이기</button></div>
+      </fieldset>
+
+      <hr>
+
+      <div class="btns">
+        <button type="button" id="copyBtn">이미지 복사</button>
+      </div>
+      <p class="msg" id="msg" role="status"></p>
+    </form>
+
+    <section class="preview">
+      <div class="paper"><img id="out" alt="생성된 빈 그래프"></div>
+      <p class="hint">저장: 그래프 이미지를 <b>우클릭 → 이미지를 다른 이름으로 저장</b> (휴대폰은 길게 누르기). 한글·한쇼에는 <b>이미지 복사</b> 후 붙여넣기.</p>
+    </section>
+  </div>
+</div>
+
+<canvas id="cv" hidden></canvas>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  // 큰 칸 수·작은 칸 수: 1부터 data-max까지 모든 정수
+  ['xMajor', 'xMinor', 'yMajor', 'yMinor'].forEach(id => {
+    const sel = $(id), max = +sel.dataset.max, def = sel.dataset.def, suf = sel.dataset.suffix || '';
+    for (let n = 1; n <= max; n++){
+      const op = document.createElement('option');
+      op.value = String(n); op.textContent = n + suf;
+      if (String(n) === def) op.selected = true;
+      sel.appendChild(op);
+    }
+  });
+  const cv = $('cv'), ctx = cv.getContext('2d'), out = $('out'), msg = $('msg');
+  const FONT = '"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  const SCALE = 2;          // 고해상도 출력
+  const S = 600;            // 정사각형 그래프 한 변 (논리 px)
+  const FS = 32;            // 축 이름 글자 크기
+  const NS = 28;            // 눈금 숫자 글자 크기
+  const C_MINOR = '#000', C_MAJOR = '#000', C_AXIS = '#000', C_TEXT = '#222';
+  const W_MINOR = 1.5, W_MAJOR = 3, W_AXIS = 5;
+
+  // 부동소수 오차 제거한 숫자 문자열
+  function fmt(v){
+    const r = Math.round(v * 1e6) / 1e6;
+    return String(r);
+  }
+  // 한글·한자 등은 세워서, 영문·괄호 등은 90° 돌려서 세로쓰기
+  const isCJK = ch => /[ᄀ-ᇿ㄰-㆏가-힯一-鿿　-〿]/.test(ch);
+  function runs(str){
+    const res = []; let buf = '';
+    for (const ch of str){
+      if (isCJK(ch) || ch === ' '){
+        if (buf){ res.push({t:buf, rot:true}); buf=''; }
+        res.push({t:ch, rot:false});
+      } else buf += ch;
+    }
+    if (buf) res.push({t:buf, rot:true});
+    return res;
+  }
+  function verticalLabelSize(str){
+    ctx.font = `500 ${FS}px ${FONT}`;
+    let h = 0;
+    for (const r of runs(str)){
+      h += r.t === ' ' ? FS * 0.5 : FS * 1.15;
+    }
+    return h;
+  }
+  function drawVerticalLabel(str, cx, top){
+    ctx.font = `500 ${FS}px ${FONT}`;
+    ctx.fillStyle = C_TEXT;
+    let y = top;
+    for (const r of runs(str)){
+      if (r.rot){
+        // 영문·괄호(단위)는 눕히지 않고 가로로 세워서 한 줄로
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(r.t, cx, y);
+        y += FS * 1.15;
+      } else if (r.t === ' '){
+        y += FS * 0.5;
+      } else {
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        ctx.fillText(r.t, cx, y);
+        y += FS * 1.15;
+      }
+    }
+  }
+
+  // 클릭으로 숨긴 숫자 (fmt 기준으로 비교)
+  const xHidden = new Set(), yHidden = new Set();
+  let hits = [], lastW = 1;
+
+  function read(){
+    const v = id => $(id).value;
+    return {
+      xName: v('xName').trim(), xUnit: v('xUnit').trim(),
+      yName: v('yName').trim(), yUnit: v('yUnit').trim(),
+      xMin: parseFloat(v('xMin')), xMax: parseFloat(v('xMax')),
+      yMin: parseFloat(v('yMin')), yMax: parseFloat(v('yMax')),
+      xMajor: parseInt(v('xMajor'), 10), xMinor: parseInt(v('xMinor'), 10),
+      yMajor: parseInt(v('yMajor'), 10), yMinor: parseInt(v('yMinor'), 10),
+      nums: $('showNums').checked,
+      xHide: xHidden, yHide: yHidden
+    };
+  }
+
+  function draw(){
+    const o = read();
+    const rangeOk = o.nums ? (isFinite(o.xMin) && isFinite(o.xMax) && o.xMax > o.xMin &&
+                              isFinite(o.yMin) && isFinite(o.yMax) && o.yMax > o.yMin) : true;
+    if (!rangeOk){
+      msg.textContent = '최댓값이 최솟값보다 커야 합니다.';
+      msg.className = 'msg err';
+      return;
+    }
+    msg.textContent = ''; msg.className = 'msg';
+
+    const yLabel = o.yName + (o.yUnit ? `(${o.yUnit})` : '');
+    const xLabel = o.xName + (o.xUnit ? `(${o.xUnit})` : '');
+    const NX = o.xMajor, NY = o.yMajor;
+    const xVals = [], yVals = [];
+    for (let i = 0; i <= NX; i++) xVals.push(o.xMin + (o.xMax - o.xMin) * i / NX);
+    for (let i = 0; i <= NY; i++) yVals.push(o.yMin + (o.yMax - o.yMin) * i / NY);
+
+    // 여백 계산
+    ctx.font = `${NS}px ${FONT}`;
+    let numW = 0;
+    if (o.nums) yVals.forEach(v => numW = Math.max(numW, ctx.measureText(fmt(v)).width));
+    // 세로축 이름 칸 너비 = 한글 한 글자와 단위 묶음 중 넓은 쪽
+    ctx.font = `500 ${FS}px ${FONT}`;
+    let colW = FS;
+    runs(yLabel).forEach(r => { if (r.rot) colW = Math.max(colW, ctx.measureText(r.t).width); });
+    ctx.font = `${NS}px ${FONT}`;
+    const padL = 24 + colW + 18 + (o.nums ? numW + 10 : 14);
+    const padT = 40;
+    const padR = 36;
+    const padB = (o.nums ? NS + 14 : 10) + 18 + FS + 18;
+    const labelH = verticalLabelSize(yLabel);
+    const W = padL + S + padR;
+    const H = Math.max(padT + S + padB, padT + labelH + padB);
+
+    cv.width = W * SCALE; cv.height = H * SCALE;
+    ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+
+    const x0 = padL, y0 = padT + S;           // 원점 위치
+    const totalX = NX * o.xMinor, cellX = S / totalX;
+    const totalY = NY * o.yMinor, cellY = S / totalY;
+    const px = v => Math.round(v) + 0.5;
+
+    // 작은 칸 (세로선: 가로축 설정, 가로선: 세로축 설정)
+    ctx.lineWidth = W_MINOR; ctx.strokeStyle = C_MINOR; ctx.beginPath();
+    for (let i = 0; i <= totalX; i++){
+      if (i % o.xMinor === 0) continue;
+      const p = i * cellX;
+      ctx.moveTo(px(x0 + p), padT); ctx.lineTo(px(x0 + p), y0);
+    }
+    for (let i = 0; i <= totalY; i++){
+      if (i % o.yMinor === 0) continue;
+      const p = i * cellY;
+      ctx.moveTo(x0, px(y0 - p)); ctx.lineTo(x0 + S, px(y0 - p));
+    }
+    ctx.stroke();
+    // 큰 칸
+    ctx.lineWidth = W_MAJOR; ctx.strokeStyle = C_MAJOR; ctx.beginPath();
+    for (let i = 0; i <= NX; i++){
+      const p = i * S / NX;
+      ctx.moveTo(px(x0 + p), padT); ctx.lineTo(px(x0 + p), y0);
+    }
+    for (let i = 0; i <= NY; i++){
+      const p = i * S / NY;
+      ctx.moveTo(x0, px(y0 - p)); ctx.lineTo(x0 + S, px(y0 - p));
+    }
+    ctx.stroke();
+
+    // 축 + 화살표
+    const ext = 22, ah = 9;
+    ctx.strokeStyle = C_AXIS; ctx.fillStyle = C_AXIS; ctx.lineWidth = W_AXIS;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0); ctx.lineTo(x0 + S + ext - ah, y0);
+    ctx.moveTo(x0, y0); ctx.lineTo(x0, padT - ext + ah);
+    ctx.stroke();
+    ctx.beginPath(); // x 화살표
+    ctx.moveTo(x0 + S + ext, y0); ctx.lineTo(x0 + S + ext - ah * 1.6, y0 - ah * 0.6); ctx.lineTo(x0 + S + ext - ah * 1.6, y0 + ah * 0.6); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); // y 화살표
+    ctx.moveTo(x0, padT - ext); ctx.lineTo(x0 - ah * 0.6, padT - ext + ah * 1.6); ctx.lineTo(x0 + ah * 0.6, padT - ext + ah * 1.6); ctx.closePath(); ctx.fill();
+
+    // 눈금 숫자
+    ctx.fillStyle = C_TEXT;
+    ctx.font = `${NS}px ${FONT}`;
+    let numBottom = y0 + 10;
+    hits = [];
+    if (o.nums){
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      xVals.forEach((v, i) => {
+        const cx = x0 + i * S / NX, w = ctx.measureText(fmt(v)).width;
+        hits.push({axis:'x', key:fmt(v), l:cx - w / 2 - 5, r:cx + w / 2 + 5, t:y0 + 4, b:y0 + 12 + NS});
+        if (o.xHide.has(fmt(v))) return;
+        ctx.fillText(fmt(v), cx, y0 + 8);
+      });
+      ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      yVals.forEach((v, i) => {
+        const cy = y0 - i * S / NY, w = ctx.measureText(fmt(v)).width;
+        hits.push({axis:'y', key:fmt(v), l:x0 - 13 - w, r:x0 - 3, t:cy - NS / 2 - 4, b:cy + NS / 2 + 4});
+        if (o.yHide.has(fmt(v))) return;
+        ctx.fillText(fmt(v), x0 - 8, cy);
+      });
+      numBottom = y0 + 8 + NS + 6;
+    }
+
+    // 축 이름
+    ctx.font = `500 ${FS}px ${FONT}`;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'top';
+    ctx.fillText(xLabel, x0 + S + ext, numBottom + 8);
+    drawVerticalLabel(yLabel, 24 + colW / 2, padT);
+
+    out.src = cv.toDataURL('image/png');
+    out.style.width = W + 'px';
+    lastW = W;
+  }
+
+  // 화면 좌표 → 그래프 좌표로 바꿔 클릭한 숫자 찾기
+  function hitAt(e){
+    const rect = out.getBoundingClientRect();
+    if (!rect.width) return null;
+    const k = lastW / rect.width;
+    const lx = (e.clientX - rect.left) * k, ly = (e.clientY - rect.top) * k;
+    return hits.find(h => lx >= h.l && lx <= h.r && ly >= h.t && ly <= h.b) || null;
+  }
+  out.addEventListener('click', e => {
+    const h = hitAt(e);
+    if (!h) return;
+    const set = h.axis === 'x' ? xHidden : yHidden;
+    if (set.has(h.key)) set.delete(h.key); else set.add(h.key);
+    draw();
+  });
+  out.addEventListener('mousemove', e => {
+    out.style.cursor = hitAt(e) ? 'pointer' : '';
+  });
+
+  async function copyImage(){
+    try {
+      const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+      await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+      msg.textContent = '복사했습니다. 문서에 붙여넣으세요.'; msg.className = 'msg';
+    } catch (e) {
+      msg.textContent = '이 화면에서는 복사가 막혀 있습니다. 그래프를 우클릭(길게 눌러) 복사·저장하세요.';
+      msg.className = 'msg err';
+    }
+  }
+
+  document.querySelectorAll('#f input, #f select').forEach(el => {
+    el.addEventListener('input', draw);
+    el.addEventListener('change', draw);
+  });
+  $('unhideBtn').addEventListener('click', () => { xHidden.clear(); yHidden.clear(); draw(); });
+  $('copyBtn').addEventListener('click', copyImage);
+  $('f').addEventListener('submit', e => e.preventDefault());
+
+  draw();
+  if (document.fonts && document.fonts.load){
+    Promise.all([
+      document.fonts.load(`400 ${NS}px "Noto Sans KR"`),
+      document.fonts.load(`500 ${FS}px "Noto Sans KR"`)
+    ]).then(draw).catch(() => {});
+  }
+})();
+</script>
+
+</body></html>
