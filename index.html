@@ -15,15 +15,14 @@
 :root[data-theme="dark"]{
   --bg:#141a1d; --panel:#1c2428; --fg:#e4eaed; --muted:#9aa8b0; --line:#2f3b41;
   --accent:#5fb3d0; --accent-ink:#0d1517; --field:#141a1d; color-scheme:dark}
-body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:17px}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:17px;word-break:keep-all}
 .wrap{max-width:1600px;margin:0 auto;padding-inline:16px;padding-block:16px 16px}
 h1{font-size:1.6rem;margin:0 0 12px;text-wrap:balance}
 .sub{color:var(--muted);margin:0 0 20px}
-.grid{display:grid;grid-template-columns:740px 1fr;gap:20px;align-items:start}
-@media (max-width:1180px){.grid{grid-template-columns:1fr}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0}
-.panel>:not(.axisbox){grid-column:1/-1}
-@media (max-width:640px){.panel{grid-template-columns:1fr}}
+/* 세로축 설정(왼쪽) · 그래프(가운데) · 가로축 설정(오른쪽) */
+.layout{display:grid;grid-template-columns:370px 1fr 370px;gap:20px;align-items:start}
+@media (max-width:1180px){.layout{grid-template-columns:1fr}}
+.side{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
 .axisbox{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:14px}
 fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
 legend{font-weight:700;font-size:1.2rem;letter-spacing:.06em;color:var(--accent);margin-bottom:8px}
@@ -47,30 +46,8 @@ button.ghost{background:transparent;color:var(--accent)}
 
 <div class="wrap">
   <h1>빈 그래프 만들기</h1>
-  <div class="grid">
-    <form class="panel" id="f" autocomplete="off">
-      <div class="axisbox">
-      <fieldset>
-        <legend>가로축 (x)</legend>
-        <div class="row">
-          <label for="xName">이름<input type="text" id="xName" value="전압"></label>
-          <label for="xUnit">단위<input type="text" id="xUnit" value="V"></label>
-        </div>
-        <div class="row">
-          <label for="xMin">최솟값<input type="number" id="xMin" value="0" step="any"></label>
-          <label for="xMax">최댓값<input type="number" id="xMax" value="10" step="any"></label>
-        </div>
-        <div class="row">
-          <label for="xMajor">큰 칸 수
-            <select id="xMajor" data-max="20" data-def="10"></select>
-          </label>
-          <label for="xMinor">큰 칸 안의 작은 칸
-            <select id="xMinor" data-max="10" data-def="2" data-suffix="칸"></select>
-          </label>
-        </div>
-      </fieldset>
-      </div>
-
+  <form class="layout" id="f" autocomplete="off">
+    <div class="side">
       <div class="axisbox">
       <fieldset>
         <legend>세로축 (y)</legend>
@@ -93,28 +70,48 @@ button.ghost{background:transparent;color:var(--accent)}
       </fieldset>
       </div>
 
-      <hr>
-
       <fieldset>
         <legend>눈금 숫자</legend>
         <label class="check" for="showNums"><input type="checkbox" id="showNums" checked>눈금 숫자 표시</label>
         <p class="msg" style="margin:0">지우고 싶은 눈금 숫자를 클릭하면 숨겨지고, 다시 클릭하면 나타납니다.</p>
         <div class="btns"><button type="button" class="ghost" id="unhideBtn">숨긴 숫자 모두 보이기</button></div>
       </fieldset>
-
-      <hr>
-
-      <div class="btns">
-        <button type="button" id="copyBtn">이미지 복사</button>
-      </div>
-      <p class="msg" id="msg" role="status"></p>
-    </form>
+    </div>
 
     <section class="preview">
       <div class="paper"><img id="out" alt="생성된 빈 그래프"></div>
       <p class="hint">저장: 그래프 이미지를 <b>우클릭 → 이미지를 다른 이름으로 저장</b> (휴대폰은 길게 누르기). 한글·한쇼에는 <b>이미지 복사</b> 후 붙여넣기.</p>
     </section>
-  </div>
+
+    <div class="side">
+      <div class="axisbox">
+      <fieldset>
+        <legend>가로축 (x)</legend>
+        <div class="row">
+          <label for="xName">이름<input type="text" id="xName" value="전압"></label>
+          <label for="xUnit">단위<input type="text" id="xUnit" value="V"></label>
+        </div>
+        <div class="row">
+          <label for="xMin">최솟값<input type="number" id="xMin" value="0" step="any"></label>
+          <label for="xMax">최댓값<input type="number" id="xMax" value="10" step="any"></label>
+        </div>
+        <div class="row">
+          <label for="xMajor">큰 칸 수
+            <select id="xMajor" data-max="20" data-def="10"></select>
+          </label>
+          <label for="xMinor">큰 칸 안의 작은 칸
+            <select id="xMinor" data-max="10" data-def="2" data-suffix="칸"></select>
+          </label>
+        </div>
+      </fieldset>
+      </div>
+
+      <div class="btns">
+        <button type="button" id="copyBtn">이미지 복사</button>
+      </div>
+      <p class="msg" id="msg" role="status"></p>
+    </div>
+  </form>
 </div>
 
 <canvas id="cv" hidden></canvas>
